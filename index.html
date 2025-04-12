@@ -5,15 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Báo cáo nhân sự</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    select, input { padding: 8px; font-size: 16px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
+    body { font-family: Arial; padding: 20px; }
+    select, input { padding: 8px; font-size: 16px; width: 100%; margin-bottom: 10px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 10px; text-align: center; font-size: 15px; }
-    button { margin-top: 15px; padding: 10px 15px; font-size: 16px; width: 100%; background-color: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    @media (max-width: 600px) {
-      th, td { font-size: 14px; padding: 8px; }
-    }
+    button { margin-top: 15px; padding: 10px 15px; font-size: 16px; }
   </style>
 </head>
 <body>
@@ -42,9 +38,10 @@
   <button onclick="submitForm()">Gửi báo cáo</button>
 
   <script>
-    const providers = ['TĐX', 'DPL', 'HTDP', 'PSAS'];
+    const providers = ['TĐX', 'DPL', 'HTDP', 'PSAS'];  // Tên các nhà cung cấp
     const tbody = document.getElementById('table-body');
 
+    // Tạo các dòng nhập liệu trong bảng
     providers.forEach(p => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -56,39 +53,44 @@
       tbody.appendChild(row);
     });
 
+    // Xử lý khi nhấn gửi báo cáo
     function submitForm() {
       const line = document.getElementById('line').value;
-      const date = new Date().toLocaleDateString('vi-VN');
-      const data = [];
+      const date = new Date().toLocaleDateString();
 
+      let entries = [];
+
+      // Lấy dữ liệu từ các ô nhập liệu
       providers.forEach(p => {
         const total = document.getElementById(`${p}_total`).value || 0;
         const present = document.getElementById(`${p}_present`).value || 0;
         const absent = document.getElementById(`${p}_absent`).value || 0;
 
-        data.push({
-          date,
-          line,
-          provider: p,
-          total,
-          present,
-          absent
-        });
+        entries.push({ provider: p, total, present, absent });
       });
 
-      fetch("https://script.google.com/macros/s/AKfycbxlTAf9DOFno9x0TrHrAmp6gwcz3rTUDWxr2YSRwGMc_z_0-xd6bITsXx-8MH2rr21U/exec", {
-        method: "POST",
-        body: JSON.stringify(data),
+      // Gửi dữ liệu qua POST đến Google Apps Script
+      fetch('https://script.google.com/macros/s/AKfycbxlTAf9DOFno9x0TrHrAmp6gwcz3rTUDWxr2YSRwGMc_z_0-xd6bITsXx-8MH2rr21U/exec', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          line,
+          entries
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert("Báo cáo đã được gửi thành công!");
+        } else {
+          alert("Có lỗi xảy ra khi gửi báo cáo.");
         }
       })
-      .then(res => res.text())
-      .then(res => {
-        alert("✅ Đã gửi báo cáo!");
-      })
-      .catch(err => {
-        alert("❌ Lỗi gửi báo cáo: " + err);
+      .catch(error => {
+        console.error("Lỗi gửi báo cáo:", error);
+        alert("Lỗi gửi báo cáo!");
       });
     }
   </script>
